@@ -2,15 +2,18 @@ import { motion } from "framer-motion"
 import { SlidersHorizontal, Star } from "lucide-react"
 import Button from "./Button"
 import { cn } from "../utils/format"
+import { useFilter } from "../hooks/useFilter";
+import { allGenres } from "../data/movies";
 
 function SidebarFilter({
-  genres = [],
-  activeGenre,
-  onGenreChange,
+  
   minRating,
   onRatingChange,
   onReset,
 }) {
+
+  const {selectedGenre, setSelectedGenre} = useFilter();
+
   const ratingOptions = [0, 7, 8, 9]
 
   return (
@@ -31,23 +34,23 @@ function SidebarFilter({
         </h4>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => onGenreChange("All")}
+            onClick={() => setSelectedGenre("all")}
             className={cn(
               "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-              activeGenre === "All"
+              selectedGenre === "All"
                 ? "bg-linear-to-r from-primary to-accent text-primary-foreground"
                 : "bg-white/5 text-muted hover:bg-white/10 hover:text-foreground",
             )}
           >
             All
           </button>
-          {genres.map((genre) => (
+          {allGenres.map((genre) => (
             <button
               key={genre}
-              onClick={() => onGenreChange(genre)}
+              onClick={() => setSelectedGenre(genre)}
               className={cn(
                 "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                activeGenre === genre
+                selectedGenre === genre
                   ? "bg-linear-to-r from-primary to-accent text-primary-foreground"
                   : "bg-white/5 text-muted hover:bg-white/10 hover:text-foreground",
               )}

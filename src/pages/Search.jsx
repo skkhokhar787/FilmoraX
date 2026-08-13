@@ -6,23 +6,99 @@ import MovieGrid from "../components/MovieGrid"
 import EmptyState from "../components/EmptyState"
 import { SkeletonGrid } from "../components/Loader"
 import Pagination from "../components/Pagination"
+import { useEffect, useState } from "react"
+import { useDebounce } from "../hooks/useDebounce"
+import { useFilter } from "../hooks/useFilter"
+import { getMovies } from "../APIs/getMovies"
 
-function Search({
-  query,
-  movies,
-  genres,
-  loading,
-  movieCount,
-  activeGenre,
-  minRating,
-  page,
-  totalPages,
-  onQueryChange,
-  onGenreChange,
-  onRatingChange,
-  onReset,
-  onPageChange,
-}) {
+function Search() {
+
+
+    const PAGE_SIZE = 12;
+    const [query, setQuery] = useState("");
+    // const [activeGenre, setActiveGenre] = useState("all");
+
+    
+    const [minRating, setMinRating] = useState(0);
+    const [page, setPage] = useState(1);
+    const [movies, setMovies] = useState([]);
+    const [movieCount, setMovieCount] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const debouncedQuery = useDebounce(query, 250);
+    
+    const {
+      selectedGenre, 
+      setSelectedGenre,
+
+    } = useFilter();
+    
+    useEffect(() => {
+      if (location.pathname !== "/search") return;
+  
+      let isMounted = true;
+      setLoading(true);
+  
+      getMovies({
+        query: debouncedQuery || undefined,
+        genre: selectedGenre,
+        minRating: minRating || undefined,
+        page,
+        limit: PAGE_SIZE,
+      })
+        .then((data) => {
+          if (!isMounted) return;
+          setMovies(data.movies);
+          setMovieCount(data.movieCount);
+          setLoading(false);
+        })
+        .catch(() => {
+          if (isMounted) setLoading(false);
+        });
+  
+      return () => {
+        isMounted = false;
+      };
+    }, [debouncedQuery,selectedGenre, minRating, page, location.pathname]);
+  
+    const handleQueryChange = (value) => {
+      setQuery(value);
+      setPage(1);
+    };
+    const handleGenreChange = (genre) => {
+      setActiveGenre(genre);
+      setPage(1);
+    };
+    const handleRatingChange = (rating) => {
+      setMinRating(rating);
+      setPage(1);
+    };
+    const handleReset = () => {
+      setQuery("");
+      setActiveGenre("All");
+      setMinRating(0);
+      setPage(1);
+    };
+  
+    const totalPages = Math.max(1, Math.ceil(movieCount / PAGE_SIZE));
+    const currentPage = Math.min(page, totalPages);
+  
+    const searchProps = {
+      query,
+      movies,
+      
+      loading,
+      movieCount,
+      minRating,
+      page: currentPage,
+      totalPages,
+      onQueryChange: handleQueryChange,
+      
+      onRatingChange: handleRatingChange,
+      onReset: handleReset,
+      onPageChange: setPage,
+    };
+  
+
   return (
     <Layout>
       <motion.div
@@ -52,12 +128,11 @@ function Search({
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[260px_1fr]">
         <SidebarFilter
-          genres={genres}
-          activeGenre={activeGenre}
-          onGenreChange={onGenreChange}
+          
+          
           minRating={minRating}
-          onRatingChange={onRatingChange}
-          onReset={onReset}
+          onRatingChange={handleRatingChange}
+          onReset={handleReset}
         />
 
         <div>
@@ -77,7 +152,7 @@ function Search({
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}
-                  onPageChange={onPageChange}
+                  onPageChange={setPage}
                 />
               )}
             </>
