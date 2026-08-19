@@ -1,4 +1,7 @@
 import { useContext } from "react";
-import { FilterContext } from "../utils/AppContext";
+import { FilterContext } from "../context/AppContext";
+import { RatingContext } from "../context/RatingContext";
 
 export const useFilter = () => useContext(FilterContext);
+
+export const useRating = () => useContext(RatingContext)

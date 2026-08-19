@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { FilterContext } from '../utils/AppContext'
+import { FilterContext } from '../context/AppContext'
 
 function FilterProvider({children}) {
     const [selectedGenre, setSelectedGenre] = useState("all");

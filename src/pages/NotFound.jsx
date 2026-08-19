@@ -12,7 +12,7 @@ function NotFound() {
           initial={{ opacity: 0, scale: 0.8, rotate: -8 }}
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
           transition={{ type: "spring", stiffness: 200, damping: 15 }}
-          className="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-r from-primary to-accent shadow-2xl shadow-primary/30"
+          className="flex h-24 w-24 items-center justify-center rounded-3xl bg-linear-to-r from-primary to-accent shadow-2xl shadow-primary/30"
         >
           <Clapperboard className="h-12 w-12 text-primary-foreground" />
         </motion.div>
