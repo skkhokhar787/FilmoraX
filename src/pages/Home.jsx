@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
-import { Link } from "react-router-dom"
-import { Flame, TrendingUp, ArrowRight } from "lucide-react"
+import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { Flame, TrendingUp, ArrowRight } from "lucide-react";
 
-import Layout from "../layout/Layout"
-import MovieGrid from "../components/MovieGrid"
-import { SkeletonGrid } from "../components/Loader"
-import { getMovies } from "../APIs/getMovies"
-import HeroCarousel from "../components/HeroCarousel"
+import Layout from "../layout/Layout";
+import MovieGrid from "../components/MovieGrid";
+import { SkeletonGrid } from "../components/Loader";
+import { getMovies } from "../APIs/getMovies";
+import HeroCarousel from "../components/HeroCarousel";
 
 function SectionHeading({ icon, title, subtitle }) {
   return (
@@ -24,33 +24,18 @@ function SectionHeading({ icon, title, subtitle }) {
         <p className="text-sm text-muted">{subtitle}</p>
       </div>
     </motion.div>
-  )
+  );
 }
 
 function Home() {
-  const [movies, setMovies] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { data, isLoading } = useQuery({
+    queryKey: ["movies", "home"],
+    queryFn: () => getMovies({ limit: 20 }),
+  });
 
-  useEffect(() => {
-    let isMounted = true
-
-    getMovies({ limit: 20 })
-      .then((data) => {
-        if (!isMounted) return
-        setMovies(data.movies)
-        setLoading(false)
-      })
-      .catch(() => {
-        if (isMounted) setLoading(false)
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  const trending = [...movies].sort((a, b) => b.rating - a.rating)
-  const newReleases = movies.filter((movie) => movie.year > 2025)
+  const movies = data?.movies || [];
+  const trending = [...movies].sort((a, b) => b.rating - a.rating);
+  const newReleases = movies.filter((movie) => movie.year > 2025);
 
   const featured = [...movies]
     .sort((a, b) => b.rating - a.rating)
@@ -67,25 +52,24 @@ function Home() {
         movie.background_image_original ||
         movie.background_image ||
         movie.large_cover_image,
-    }))
+    }));
 
   return (
     <Layout fullBleed>
-      {loading || movies.length === 0 ? (
+      {isLoading || movies.length === 0 ? (
         <div className="h-[45vh] min-h-90 w-full animate-pulse bg-white/5 md:h-[40vh]" />
       ) : (
         <HeroCarousel movies={featured} />
       )}
 
       <div className="mx-auto w-full max-w-7xl px-5 py-14 md:px-10">
-
         <section>
           <SectionHeading
             icon={<TrendingUp className="h-5 w-5" />}
             title="Trending Now"
             subtitle="The highest rated films this week"
           />
-          {loading ? (
+          {isLoading ? (
             <SkeletonGrid count={10} />
           ) : (
             <MovieGrid movies={trending} />
@@ -98,7 +82,7 @@ function Home() {
             title="New Releases"
             subtitle="Fresh from the big screen"
           />
-          {loading ? (
+          {isLoading ? (
             <SkeletonGrid count={5} />
           ) : (
             <MovieGrid movies={newReleases} />
@@ -133,10 +117,9 @@ function Home() {
             </Link>
           </div>
         </motion.section>
-
       </div>
     </Layout>
-  )
+  );
 }
 
-export default Home
+export default Home;

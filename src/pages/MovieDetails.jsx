@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -8,56 +9,61 @@ import {
   Calendar,
   ArrowLeft,
   Plus,
-  Cast,
   Download,
 } from "lucide-react";
 
 import Layout from "../layout/Layout";
 import Button from "../components/Button";
-import MovieCast from "../components/MovieCast";
 import Modal from "../components/Modal";
-import { Spinner } from "../components/Loader";
-import { getMovieDetails } from "../APIs/getMoviesDetails";
-import { formatRating, formatRuntime } from "../utils/format";
+import MovieCast from "../components/MovieCast";
 import SimilarMovies from "../components/SimilarMovies";
+import { Spinner } from "../components/Loader";
+
+import { getMovieDetails } from "../APIs/getMoviesDetails";
 
 function MovieDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [movie, setMovie] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [trailerOpen, setTrailerOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchMovie = async () => {
-      try {
-        const data = await getMovieDetails(id);
-        setMovie(data.data.movie);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch movie with React Query
+  const {
+    data,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["movie", id],
+    queryFn: () => getMovieDetails(id),
+    enabled: !!id,
+  });
 
-    fetchMovie();
+  const movie = data?.data?.movie;
+
+  // Scroll to top when movie changes
+  useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
-  console.log(movie?.torrents[0].url);
 
-  if (!loading && !movie) {
+  // Movie not found / API error
+  if (isError || (!isLoading && !movie)) {
     return (
       <Layout>
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-          <h2 className="text-xl font-semibold">Movie not found</h2>
-          <Button onClick={() => navigate("/")}>Back to home</Button>
+          <h2 className="text-xl font-semibold">
+            Movie not found
+          </h2>
+
+          <Button onClick={() => navigate("/")}>
+            Back to home
+          </Button>
         </div>
       </Layout>
     );
   }
 
-  if (loading) {
+  // Loading
+  if (isLoading) {
     return (
       <Layout>
         <div className="flex min-h-[60vh] items-center justify-center">
@@ -67,6 +73,7 @@ function MovieDetails() {
     );
   }
 
+  // Get download URL
   const getDownload = () => {
     return movie?.torrents?.[0]?.url;
   };
@@ -74,6 +81,7 @@ function MovieDetails() {
   return (
     <Layout fullBleed>
       <div className="relative">
+
         {/* BACKDROP */}
         <div className="relative h-[70vh] w-full overflow-hidden">
           <motion.img
@@ -89,8 +97,9 @@ function MovieDetails() {
             className="h-full w-full object-cover"
           />
 
-          <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-background via-background/40 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-3/4 bg-linear-to-t from-background via-background/40 to-transparent" />
 
+          {/* BACK BUTTON */}
           <div className="absolute left-5 top-20 z-10 md:left-10">
             <Link to="/">
               <Button
@@ -104,24 +113,33 @@ function MovieDetails() {
           </div>
         </div>
 
+
         {/* CONTENT */}
-        <div className="relative z-10 mx-auto -mt-[35vh] w-full max-w-7xl px-5 md:px-10">
+        <div className="relative z-10 mx-auto mt-[-35vh] w-full max-w-7xl px-5 md:px-10">
           <div className="flex flex-col gap-8 md:flex-row md:items-end">
+
             {/* POSTER */}
             <motion.img
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              src={movie.large_cover_image || "/placeholder.svg"}
+              transition={{ duration: 0.6 }}
+              src={
+                movie.large_cover_image ||
+                "/placeholder.svg"
+              }
               alt={movie.title}
               className="hidden w-52 rounded-2xl shadow-2xl md:block"
             />
 
-            {/* DETAILS */}
+
+            {/* MOVIE DETAILS */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
               className="flex-1"
             >
+
               {/* GENRES */}
               <div className="flex flex-wrap gap-2">
                 {movie.genres?.map((genre) => (
@@ -134,42 +152,56 @@ function MovieDetails() {
                 ))}
               </div>
 
+
+              {/* TITLE */}
               <h1 className="mt-4 text-4xl font-bold md:text-5xl">
                 {movie.title}
               </h1>
 
-              {/* META */}
+
+              {/* META INFORMATION */}
               <div className="mt-4 flex flex-wrap items-center gap-5 text-sm">
+
+                {/* RATING */}
                 <span className="flex items-center gap-1">
                   <Star className="h-4 w-4 text-yellow-400" />
-                  {formatRating(movie.rating)}
+                  {movie.rating}
                 </span>
 
+                {/* YEAR */}
                 <span className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   {movie.year}
                 </span>
 
+                {/* RUNTIME */}
                 <span className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  {formatRuntime(movie.runtime)}
+                  {movie.runtime} min
                 </span>
+
               </div>
+
 
               {/* DESCRIPTION */}
               <p className="mt-5 max-w-2xl text-muted">
-                {movie.description_full || movie.summary || "No description"}
+                {movie.description_full ||
+                  movie.summary ||
+                  "No description available."}
               </p>
 
-              {/* ACTIONS */}
-              <div className="mt-6 flex gap-3">
+
+              {/* ACTION BUTTONS */}
+              <div className="mt-6 flex flex-wrap gap-3">
+
+                {/* DOWNLOAD */}
                 <Button
                   icon={<Download className="h-5 w-5" />}
                   onClick={() => {
                     const url = getDownload();
 
                     if (url) {
-                      window.open(url, "_blank"); // ✅ THIS triggers download
+                      window.open(url, "_blank");
                     } else {
                       console.log("No torrent available");
                     }
@@ -177,6 +209,9 @@ function MovieDetails() {
                 >
                   Download Now
                 </Button>
+
+
+                {/* TRAILER */}
                 <Button
                   icon={<Play className="h-5 w-5" />}
                   onClick={() => setTrailerOpen(true)}
@@ -184,34 +219,52 @@ function MovieDetails() {
                   Watch Trailer
                 </Button>
 
-                <Button variant="secondary" icon={<Plus />}>
+
+                {/* ADD TO LIST */}
+                <Button
+                  variant="secondary"
+                  icon={<Plus className="h-5 w-5" />}
+                >
                   Add to List
                 </Button>
+
               </div>
             </motion.div>
           </div>
+
+
+          {/* CAST */}
           <MovieCast id={id} />
-          <SimilarMovies movieId={movie.id} genres={movie.genres} />
+
+
+          {/* SIMILAR MOVIES */}
+          <SimilarMovies
+            movieId={movie.id}
+            genres={movie.genres}
+          />
         </div>
 
+
         {/* TRAILER MODAL */}
+        <Modal
+          open={trailerOpen}
+          onClose={() => setTrailerOpen(false)}
+          title={`${movie.title} Trailer`}
+        >
+          <div className="aspect-video w-full bg-black">
+            {trailerOpen && movie.yt_trailer_code && (
+              <iframe
+                className="h-full w-full"
+                src={`https://www.youtube.com/embed/${movie.yt_trailer_code}?autoplay=1`}
+                title={`${movie.title} Trailer`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            )}
+          </div>
+        </Modal>
+
       </div>
-      <Modal
-        open={trailerOpen}
-        onClose={() => setTrailerOpen(false)}
-        title={`${movie.title} Trailer`}
-      >
-        <div className="aspect-video w-full bg-black">
-          {trailerOpen && (
-            <iframe
-              className="h-full w-full"
-              src={`https://www.youtube.com/embed/${movie.yt_trailer_code}?autoplay=1`}
-              title="Trailer"
-              allowFullScreen
-            />
-          )}
-        </div>
-      </Modal>
     </Layout>
   );
 }

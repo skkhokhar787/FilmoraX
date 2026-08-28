@@ -1,55 +1,48 @@
-import { useEffect, useState } from "react"
-import MovieGrid from "./MovieGrid"
-import { Spinner } from "./Loader"
-import { getMovies } from "../APIs/getMovies"
+import { useQuery } from "@tanstack/react-query";
+
+import MovieGrid from "./MovieGrid";
+import { Spinner } from "./Loader";
+import { getMovies } from "../APIs/getMovies";
 
 function SimilarMovies({ movieId, genres }) {
-  const primaryGenre = genres?.[0] ?? ""
-  const [movies, setMovies] = useState([])
-  const [loading, setLoading] = useState(true)
+  const primaryGenre = genres?.[0] ?? "";
 
-  useEffect(() => {
-    if (!primaryGenre) return
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["similarMovies", primaryGenre, movieId],
+    queryFn: () =>
+      getMovies({
+        genre: primaryGenre,
+        limit: 20,
+      }),
+    enabled: !!primaryGenre,
+  });
 
-    let isMounted = true
-    setLoading(true)
+  const movies =
+    data?.movies?.filter((movie) => movie.id !== movieId).slice(0, 10) || [];
 
-    getMovies({ genre: primaryGenre, limit: 20 })
-      .then((data) => {
-        if (!isMounted) return
-        setMovies(
-          data.movies.filter((movie) => movie.id !== movieId).slice(0, 10),
-        )
-        setLoading(false)
-      })
-      .catch(() => {
-        if (isMounted) setLoading(false)
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [movieId, primaryGenre])
-
-  if (loading) {
+  if (isLoading) {
     return (
       <section className="mt-20">
         <h2 className="mb-6 text-2xl font-bold">Similar Movies</h2>
+
         <div className="flex items-center justify-center py-16">
           <Spinner />
         </div>
       </section>
-    )
+    );
   }
 
-  if (movies.length === 0) return null
+  if (isError || movies.length === 0) {
+    return null;
+  }
 
   return (
     <section className="mt-20">
       <h2 className="mb-6 text-2xl font-bold">Similar Movies</h2>
+
       <MovieGrid movies={movies} />
     </section>
-  )
+  );
 }
 
-export default SimilarMovies
+export default SimilarMovies;
