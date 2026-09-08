@@ -47,3 +47,7 @@ function SimilarMovies({ movieId, genres }) {
 }
 
 export default SimilarMovies;
+
+
+
+
