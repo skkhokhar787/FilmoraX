@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
+
 import MovieGrid from "./MovieGrid";
 import { Spinner } from "./Loader";
 import { getMovies } from "../APIs/getMovies";
