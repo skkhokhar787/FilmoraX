@@ -32,5 +32,11 @@
   },
   "allowScripts": {
     "zustand@5.0.15": true
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
