@@ -27,42 +27,18 @@ function MovieDetails() {
 
   const [trailerOpen, setTrailerOpen] = useState(false);
 
-  // Fetch movie with React Query
-  const {
-    data,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["movie", id],
     queryFn: () => getMovieDetails(id),
-    enabled: !!id,
+    enabled: Boolean(id),
   });
 
   const movie = data?.data?.movie;
 
-  // Scroll to top when movie changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
 
-  // Movie not found / API error
-  if (isError || (!isLoading && !movie)) {
-    return (
-      <Layout>
-        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-          <h2 className="text-xl font-semibold">
-            Movie not found
-          </h2>
-
-          <Button onClick={() => navigate("/")}>
-            Back to home
-          </Button>
-        </div>
-      </Layout>
-    );
-  }
-
-  // Loading
   if (isLoading) {
     return (
       <Layout>
@@ -73,15 +49,44 @@ function MovieDetails() {
     );
   }
 
-  // Get download URL
-  const getDownload = () => {
-    return movie?.torrents?.[0]?.url;
+  if (isError || !movie) {
+    return (
+      <Layout>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+          <h2 className="text-xl font-semibold">Movie not found</h2>
+
+          <Button onClick={() => navigate("/")}>Back to home</Button>
+        </div>
+      </Layout>
+    );
+  }
+
+  const trailerCode = movie.yt_trailer_code;
+
+  const trailerUrl = trailerCode
+    ? `https://www.youtube.com/embed/${trailerCode}?autoplay=1&rel=0`
+    : null;
+
+  const downloadUrl = movie.torrents?.[0]?.url;
+
+  const handleDownload = () => {
+    if (downloadUrl) {
+      window.open(downloadUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleTrailer = () => {
+    if (!trailerCode) {
+      console.log("No trailer available for this movie.");
+      return;
+    }
+
+    setTrailerOpen(true);
   };
 
   return (
     <Layout fullBleed>
       <div className="relative">
-
         {/* BACKDROP */}
         <div className="relative h-[70vh] w-full overflow-hidden">
           <motion.img
@@ -113,33 +118,26 @@ function MovieDetails() {
           </div>
         </div>
 
-
         {/* CONTENT */}
         <div className="relative z-10 mx-auto mt-[-35vh] w-full max-w-7xl px-5 md:px-10">
           <div className="flex flex-col gap-8 md:flex-row md:items-end">
-
             {/* POSTER */}
             <motion.img
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              src={
-                movie.large_cover_image ||
-                "/placeholder.svg"
-              }
+              src={movie.large_cover_image || "/placeholder.svg"}
               alt={movie.title}
               className="hidden w-52 rounded-2xl shadow-2xl md:block"
             />
 
-
-            {/* MOVIE DETAILS */}
+            {/* DETAILS */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               className="flex-1"
             >
-
               {/* GENRES */}
               <div className="flex flex-wrap gap-2">
                 {movie.genres?.map((genre) => (
@@ -152,36 +150,28 @@ function MovieDetails() {
                 ))}
               </div>
 
-
               {/* TITLE */}
               <h1 className="mt-4 text-4xl font-bold md:text-5xl">
                 {movie.title}
               </h1>
 
-
-              {/* META INFORMATION */}
+              {/* META */}
               <div className="mt-4 flex flex-wrap items-center gap-5 text-sm">
-
-                {/* RATING */}
                 <span className="flex items-center gap-1">
                   <Star className="h-4 w-4 text-yellow-400" />
                   {movie.rating}
                 </span>
 
-                {/* YEAR */}
                 <span className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   {movie.year}
                 </span>
 
-                {/* RUNTIME */}
                 <span className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
                   {movie.runtime} min
                 </span>
-
               </div>
-
 
               {/* DESCRIPTION */}
               <p className="mt-5 max-w-2xl text-muted">
@@ -190,60 +180,37 @@ function MovieDetails() {
                   "No description available."}
               </p>
 
-
-              {/* ACTION BUTTONS */}
+              {/* ACTIONS */}
               <div className="mt-6 flex flex-wrap gap-3">
-
-                {/* DOWNLOAD */}
                 <Button
                   icon={<Download className="h-5 w-5" />}
-                  onClick={() => {
-                    const url = getDownload();
-
-                    if (url) {
-                      window.open(url, "_blank");
-                    } else {
-                      console.log("No torrent available");
-                    }
-                  }}
+                  onClick={handleDownload}
+                  disabled={!downloadUrl}
                 >
                   Download Now
                 </Button>
 
-
-                {/* TRAILER */}
                 <Button
                   icon={<Play className="h-5 w-5" />}
-                  onClick={() => setTrailerOpen(true)}
+                  onClick={handleTrailer}
+                  disabled={!trailerCode}
                 >
                   Watch Trailer
                 </Button>
 
-
-                {/* ADD TO LIST */}
-                <Button
-                  variant="secondary"
-                  icon={<Plus className="h-5 w-5" />}
-                >
+                <Button variant="secondary" icon={<Plus className="h-5 w-5" />}>
                   Add to List
                 </Button>
-
               </div>
             </motion.div>
           </div>
 
-
           {/* CAST */}
           <MovieCast id={id} />
 
-
           {/* SIMILAR MOVIES */}
-          <SimilarMovies
-            movieId={movie.id}
-            genres={movie.genres}
-          />
+          <SimilarMovies movieId={movie.id} genres={movie.genres} />
         </div>
-
 
         {/* TRAILER MODAL */}
         <Modal
@@ -252,18 +219,22 @@ function MovieDetails() {
           title={`${movie.title} Trailer`}
         >
           <div className="aspect-video w-full bg-black">
-            {trailerOpen && movie.yt_trailer_code && (
+            {movie.yt_trailer_code ? (
               <iframe
                 className="h-full w-full"
-                src={`https://www.youtube.com/embed/${movie.yt_trailer_code}?autoplay=1`}
+                src={`https://www.youtube.com/embed/${movie.yt_trailer_code}`}
                 title={`${movie.title} Trailer`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
               />
+            ) : (
+              <div className="flex h-full items-center justify-center text-white">
+                Trailer not available
+              </div>
             )}
           </div>
         </Modal>
-
       </div>
     </Layout>
   );

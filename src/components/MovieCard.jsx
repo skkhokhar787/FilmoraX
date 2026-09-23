@@ -1,9 +1,8 @@
-import { motion } from "framer-motion"
-import { Link } from "react-router-dom"
-import { Star, Play, Download } from "lucide-react"
-import { formatRating } from "../utils/format"
-import { useState, useEffect } from "react"
-import { getMovies } from "../APIs/getMovies"
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { Star, Download } from "lucide-react";
+
+import { formatRating } from "../utils/format";
 
 function MovieCard({ movie }) {
   return (
@@ -12,7 +11,8 @@ function MovieCard({ movie }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       whileHover={{ y: -8 }}
-      className="group relative">
+      className="group relative"
+    >
       <Link
         to={`/movie/${movie.id}`}
         className="block overflow-hidden rounded-2xl border border-border outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
@@ -24,6 +24,7 @@ function MovieCard({ movie }) {
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
           />
+
           <div className="absolute inset-0 bg-linear-to-t from-background via-background/20 to-transparent opacity-70 transition-opacity duration-300 group-hover:opacity-90" />
 
           <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-xs font-semibold backdrop-blur-md">
@@ -41,14 +42,15 @@ function MovieCard({ movie }) {
             <h3 className="font-display truncate text-sm font-semibold text-foreground">
               {movie.title}
             </h3>
+
             <p className="mt-0.5 truncate text-xs text-muted">
-              {movie.year} · {movie.genres[0]}
+              {movie.year} · {movie.genres?.[0] || "Unknown"}
             </p>
           </div>
         </div>
       </Link>
     </motion.div>
-  )
+  );
 }
 
-export default MovieCard
+export default MovieCard;

@@ -1,18 +1,18 @@
-import { useEffect, useState } from "react"
-import { data } from "react-router-dom"
+import { useEffect, useState } from "react";
+import { data } from "react-router-dom";
 
- const useFetchAPIs = async (api) => {
-    const [response, setResponse] = useState([])
-console.log(api);
+const useFetchAPIs = async (api) => {
+  const [response, setResponse] = useState([]);
+  console.log(api);
 
-    const res = await fetch(api)
-    const data = await res.json()
+  const res = await fetch(api);
+  const data = await res.json();
 
-    useEffect((data) => setResponse(details.json()))
+  useEffect((data) => setResponse(details.json()));
 
-    console.log(response);
-    
-    return response
-}
+  console.log(response);
 
-export default useFetchAPIs
+  return response;
+};
+
+export default useFetchAPIs;

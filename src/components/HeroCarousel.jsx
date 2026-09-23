@@ -6,21 +6,30 @@ import Button from "./Button"
 import { formatRating, formatRuntime } from "../utils/format"
 
 function HeroCarousel({ movies }) {
-  const [index, setIndex] = useState(0)
+  const [index, setIndex] = useState(0);
 
-  const next = useCallback(
-    () => setIndex((prev) => (prev + 1) % movies.length),
-    [movies.length],
-  )
-  const prev = () =>
-    setIndex((current) => (current - 1 + movies.length) % movies.length)
+  const next = useCallback(() => {
+    setIndex((prev) => (prev + 1) % movies.length);
+  }, [movies.length]);
+
+  const prev = () => {
+    setIndex(
+      (current) =>
+        (current - 1 + movies.length) % movies.length
+    );
+  };
 
   useEffect(() => {
-    const timer = setInterval(next, 6000)
-    return () => clearInterval(timer)
-  }, [next])
+    if (movies.length <= 1) return;
 
-  const active = movies[index]
+    const timer = setInterval(next, 6000);
+
+    return () => clearInterval(timer);
+  }, [next, movies.length]);
+
+  if (!movies.length) return null;
+
+  const active = movies[index];
 
   return (
     <section className="relative h-[45vh] min-h-90 w-full overflow-hidden md:h-[40vh] md:min-h-105">
